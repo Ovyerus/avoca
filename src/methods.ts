@@ -6,7 +6,7 @@ import { handleError } from "./handleError";
 export const methods = (methodHandlers: {
   [key: string]: NextApiHandler | AuthenticatedOptions;
 }): NextApiHandler => (req, res) => {
-  const method = req.method.toLowerCase();
+  const method = req.method!.toLowerCase();
   const handler = methodHandlers[method];
 
   if (methodHandlers[method])

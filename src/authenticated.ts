@@ -9,10 +9,10 @@ export interface AuthenticatedOptions {
   ): Promisable<boolean | { code: number; message: string }>;
 }
 
-export const authenticated = ({ fn, authenticate }): NextApiHandler => async (
-  req,
-  res
-) => {
+export const authenticated = ({
+  fn,
+  authenticate,
+}: AuthenticatedOptions): NextApiHandler => async (req, res) => {
   const authed = await authenticate(req);
 
   if (!authed)
