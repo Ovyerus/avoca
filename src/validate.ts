@@ -12,7 +12,7 @@ export interface ValidateOptions {
   location?: Locations;
 }
 
-const validate = <S = any, L extends Locations = "body">(
+export const validate = <S = any, L extends Locations = "body">(
   { schema, location = "body" }: ValidateOptions,
   handler: ValidatedNextApiHandler<S, L>
 ): NextApiHandler => (req, res) => {
@@ -22,5 +22,3 @@ const validate = <S = any, L extends Locations = "body">(
   if (!error) return handler(req as ValidatedNextApiRequest<S, L>, res);
   else res.status(400).json({ code: 400, message: error.message });
 };
-
-export default validate;
