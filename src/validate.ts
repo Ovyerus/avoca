@@ -1,24 +1,38 @@
 import type Joi from "joi";
-import type { NextApiHandler } from "next";
+import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 
-import type {
-  Locations,
-  ValidatedNextApiHandler,
-  ValidatedNextApiRequest,
-} from "./types";
+import type { ValidatedNextApiHandler, ValidatedNextApiRequest } from "./types";
 
 export interface ValidateOptions {
-  schema: Joi.Schema;
-  location?: Locations;
+  bodySchema?: Joi.Schema;
+  querySchema?: Joi.Schema;
+  onValidationError?(
+    error: Joi.ValidationError,
+    location: "body" | "query",
+    req: NextApiRequest,
+    res: NextApiResponse
+  ): void;
 }
 
-export const validate = <S = any, L extends Locations = "body">(
-  { schema, location = "body" }: ValidateOptions,
-  handler: ValidatedNextApiHandler<S, L>
+export const validate = <B = any, Q extends {} = NextApiRequest["query"]>(
+  {
+    bodySchema,
+    querySchema,
+    onValidationError = (err, _, __, res) =>
+      res.status(400).json({ code: 400, message: err.message }),
+  }: ValidateOptions,
+  handler: ValidatedNextApiHandler<B, Q>
 ): NextApiHandler => (req, res) => {
-  const { error, value } = schema.validate(req[location]);
-  req.body = value; // Joi changes some values depending on schema, set that as body
+  const { error: bodyError, value: bodyValue } =
+    bodySchema?.validate(req.body) ?? {};
+  const { error: queryError, value: queryValue } =
+    querySchema?.validate(req.query) ?? {};
 
-  if (!error) return handler(req as ValidatedNextApiRequest<S, L>, res);
-  else res.status(400).json({ code: 400, message: error.message });
+  if (bodyError) return onValidationError(bodyError, "body", req, res);
+  if (queryError) return onValidationError(queryError, "query", req, res);
+
+  if (bodyValue) req.body = bodyValue;
+  if (queryValue) req.query = queryValue;
+
+  return handler(req as ValidatedNextApiRequest<B, Q>, res);
 };
