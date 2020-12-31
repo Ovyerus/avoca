@@ -6,7 +6,14 @@ export const handleError = (fn: NextApiHandler): NextApiHandler => async (
 ) => {
   try {
     return await fn(req, res);
-  } catch ({ message }) {
-    res.status(500).json({ code: 500, message });
+  } catch (err) {
+    const response = {
+      code: 500,
+      message: err.message,
+      stack: process.env.NODE_ENV !== "production" ? err.stack : undefined,
+    };
+
+    console.error(err);
+    res.status(500).json(response);
   }
 };

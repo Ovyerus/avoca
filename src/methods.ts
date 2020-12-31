@@ -10,7 +10,7 @@ export const methods = (methodHandlers: {
   const handler = methodHandlers[method];
 
   if (methodHandlers[method])
-    if (typeof handler === "function") return handleError(handler)(req, res);
+    if (typeof handler === "function") return handler(req, res);
     else return authenticated(handler)(req, res);
   else
     res
