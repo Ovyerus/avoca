@@ -1,7 +1,6 @@
 import { NextApiHandler } from "next";
 
 import { authenticated, AuthenticatedOptions } from "./authenticated";
-import { handleError } from "./handleError";
 
 export const methods = (methodHandlers: {
   [key: string]: NextApiHandler | AuthenticatedOptions;
