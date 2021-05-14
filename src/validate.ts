@@ -1,38 +1,48 @@
-import type Joi from "joi";
+import { z } from "zod";
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 
-import type { ValidatedNextApiHandler, ValidatedNextApiRequest } from "./types";
+import type { ValidatedNextApiHandler } from "./types";
 
-export interface ValidateOptions {
-  bodySchema?: Joi.Schema;
-  querySchema?: Joi.Schema;
+export interface ValidateOptions<
+  B extends z.ZodObject<any>,
+  Q extends z.ZodObject<any>
+> {
+  bodySchema?: B;
+  querySchema?: Q;
   onValidationError?(
-    error: Joi.ValidationError,
+    error: z.ZodError,
     location: "body" | "query",
     req: NextApiRequest,
     res: NextApiResponse
   ): void;
 }
 
-export const validate = <B = any, Q extends {} = NextApiRequest["query"]>(
-  {
-    bodySchema,
-    querySchema,
-    onValidationError = (err, _, __, res) =>
-      res.status(400).json({ code: 400, message: err.message }),
-  }: ValidateOptions,
-  handler: ValidatedNextApiHandler<B, Q>
-): NextApiHandler => (req, res) => {
-  const { error: bodyError, value: bodyValue } =
-    bodySchema?.validate(req.body) ?? {};
-  const { error: queryError, value: queryValue } =
-    querySchema?.validate(req.query) ?? {};
+export const validate =
+  <B extends z.ZodObject<any>, Q extends z.ZodObject<any>>(
+    {
+      bodySchema,
+      querySchema,
+      onValidationError = (err, _, __, res) =>
+        res.status(400).json({ code: 400, message: err.message }),
+    }: ValidateOptions<B, Q>,
+    handler: ValidatedNextApiHandler<z.infer<B>, z.infer<Q>>
+  ): NextApiHandler =>
+  (req, res) => {
+    if (bodySchema) {
+      const result = bodySchema.safeParse(req.body);
 
-  if (bodyError) return onValidationError(bodyError, "body", req, res);
-  if (queryError) return onValidationError(queryError, "query", req, res);
+      if (!result.success)
+        return onValidationError(result.error, "body", req, res);
+      else req.body = result.data;
+    }
 
-  if (bodyValue) req.body = bodyValue;
-  if (queryValue) req.query = queryValue;
+    if (querySchema) {
+      const result = querySchema.safeParse(req.body);
 
-  return handler(req as ValidatedNextApiRequest<B, Q>, res);
-};
+      if (!result.success)
+        return onValidationError(result.error, "query", req, res);
+      else req.query = result.data;
+    }
+
+    return handler(req, res);
+  };
