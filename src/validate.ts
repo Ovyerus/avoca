@@ -23,7 +23,7 @@ export const validate =
       bodySchema,
       querySchema,
       onValidationError = (err, _, __, res) =>
-        res.status(400).json({ code: 400, message: err.message }),
+        res.status(400).json({ code: 400, error: err.issues }),
     }: ValidateOptions<B, Q>,
     handler: ValidatedNextApiHandler<z.infer<B>, z.infer<Q>>
   ): NextApiHandler =>
