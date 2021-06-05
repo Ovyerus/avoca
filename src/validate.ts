@@ -37,7 +37,7 @@ export const validate =
     }
 
     if (querySchema) {
-      const result = querySchema.safeParse(req.body);
+      const result = querySchema.safeParse(req.query);
 
       if (!result.success)
         return onValidationError(result.error, "query", req, res);
