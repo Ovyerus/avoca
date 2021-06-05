@@ -8,6 +8,7 @@
     "dist"
   ],
   "scripts": {
+    "prepublish": "yarn build",
     "build": "tsc"
   },
   "devDependencies": {
